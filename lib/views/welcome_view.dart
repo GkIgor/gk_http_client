@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:gk_http_client/services/navigation_service.dart';
 
-class Welcome extends StatelessWidget {
+class Welcome extends StatefulWidget {
   const Welcome({super.key});
+
+  @override
+  State<Welcome> createState() => _WelcomeState();
+}
+
+class _WelcomeState extends State<Welcome> {
+  final List<String> _workspaces = [];
 
   @override
   Widget build(BuildContext context) {
@@ -27,14 +35,13 @@ class Welcome extends StatelessWidget {
               children: [
                 _WorkspaceCard(
                   isAddCard: true,
-                  onTap: () => _showCreateWorkspacDialog(context),
+                  onTap: () => _showCreateWorkspaceDialog(context),
                 ),
-                ...List.generate(
-                  10,
-                  (index) => _WorkspaceCard(
+                ..._workspaces.map(
+                  (name) => _WorkspaceCard(
                     isAddCard: false,
-                    title: 'Projeto ${index + 1}',
-                    onTap: () => {},
+                    title: name,
+                    onTap: () => _openWorkspace(name),
                   ),
                 ),
               ],
@@ -45,12 +52,13 @@ class Welcome extends StatelessWidget {
     );
   }
 
-  void _showCreateWorkspacDialog(BuildContext context) {
+  void _showCreateWorkspaceDialog(BuildContext context) {
     showDialog(context: context, builder: (context) => _alertDialog(context));
   }
 
   AlertDialog _alertDialog(BuildContext context) {
     final TextEditingController workspaceName = TextEditingController();
+    String? errorText;
 
     return AlertDialog(
       backgroundColor: const Color(0xFF2B2B2B),
@@ -58,43 +66,62 @@ class Welcome extends StatelessWidget {
         'Novo Workspace',
         style: TextStyle(color: Colors.white),
       ),
-      content: Column(
-        mainAxisSize: .min,
-        children: [
-          TextField(
-            controller: workspaceName,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              labelText: 'Nome do Projeto',
-              labelStyle: const TextStyle(color: Colors.grey),
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.grey.shade700),
+      content: StatefulBuilder(
+        builder: (context, setModalState) {
+          return Column(
+            mainAxisSize: .min,
+            children: [
+              TextField(
+                controller: workspaceName,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'Nome do Projeto',
+                  errorText: errorText,
+                  labelStyle: const TextStyle(color: Colors.grey),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey.shade700),
+                  ),
+                  errorBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.red),
+                  ),
+                ),
               ),
-            ),
-          ),
-        ],
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: .end,
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      workspaceName.dispose();
+                    },
+                    child: const Text('Cancelar'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      var (ok, error) = _createNewWorkspace(workspaceName);
+
+                      if (error != null) {
+                        setModalState(() {
+                          errorText = error.toString().replaceFirst(
+                            'Exception: ',
+                            '',
+                          );
+                        });
+                        return;
+                      }
+
+                      Navigator.pop(context);
+                      workspaceName.dispose();
+                    },
+                    child: const Text('Criar'),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
       ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.pop(context);
-            workspaceName.dispose();
-          },
-          child: const Text('Cancelar'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            var (ok, error) = _createNewWorkspace(workspaceName);
-
-            if (error == null) {
-              Navigator.pop(context);
-            }
-
-            workspaceName.dispose();
-          },
-          child: const Text('Criar'),
-        ),
-      ],
     );
   }
 
@@ -103,7 +130,17 @@ class Welcome extends StatelessWidget {
       return (null, Exception('Nome do workspace é obrigatório'));
     }
 
+    if (mounted) {
+      setState(() {
+        _workspaces.add(controller.text);
+      });
+    }
+
     return (true, null);
+  }
+
+  void _openWorkspace(String name) {
+    NavigationService.navigateTo(.workspace, workspaceName: name);
   }
 }
 
