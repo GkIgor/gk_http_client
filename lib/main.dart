@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:gk_http_client/core/app_config.dart';
 import 'package:gk_http_client/screens/home_screen.dart';
 import 'package:gk_http_client/screens/workspace_screen.dart';
 import 'package:gk_http_client/services/navigation_service.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  AppConfig appConfig = AppConfig();
+  appConfig.initializeInfrastructure();
+
   runApp(Apllication());
 }
 

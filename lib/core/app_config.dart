@@ -1,14 +1,17 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
-import 'package:gk_http_client/main.dart';
-
 class AppConfig {
-  final String _applicationName = 'gk_http_client';
+  static const String _applicationName = 'gk_http_client';
+  static String? home = Platform.environment['HOME'];
+  static String workspaceDir = '$home/.$_applicationName/workspaces';
 
-  String? workspaceDir() {
-    if (kIsWeb) return null;
+  Future<void> initializeInfrastructure() async {
+    if (home == null) {
+      throw Exception('HOME environment variable is not set');
+    }
 
-    return '${Platform.environment['HOME']}/.$_applicationName/workspaces';
+    final dir = Directory(workspaceDir);
+
+    await dir.create(recursive: true);
   }
 }

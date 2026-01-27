@@ -14,17 +14,41 @@ class WorkspaceModel {
     return {
       'id': id,
       'name': name,
-      // Aqui convertemos o Map de segredos também
       'environments': environments.map((k, v) => MapEntry(k, v.toMap())),
     };
+  }
+
+  factory WorkspaceModel.fromMap(Map<String, dynamic> map) {
+    final dynamic envMap = map['environments'];
+
+    Map<String, WorkspaceSecretKey> loadedEnvs = {};
+
+    if (envMap != null && envMap is Map) {
+      envMap.forEach((key, value) {
+        loadedEnvs[key] = WorkspaceSecretKey.fromMap(
+          Map<String, dynamic>.from(value),
+        );
+      });
+    }
+
+    return WorkspaceModel(
+      name: map['name'],
+      id: map['id'],
+      environments: loadedEnvs,
+    );
   }
 }
 
 class WorkspaceSecretKey {
-  String value;
-  bool isSecret;
+  late String value;
+  late bool isSecret;
 
   WorkspaceSecretKey({required this.value, this.isSecret = false});
+
+  WorkspaceSecretKey.fromMap(Map<String, dynamic> map) {
+    value = map['value'];
+    isSecret = map['isSecret'] ?? false;
+  }
 
   Map<String, dynamic> toMap() => {'value': value, 'isSecret': isSecret};
 }
