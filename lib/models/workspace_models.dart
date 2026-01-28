@@ -1,3 +1,5 @@
+enum WorkspaceItemType { folder, request }
+
 class WorkspaceModel {
   final String id;
   String name;
@@ -51,4 +53,22 @@ class WorkspaceSecretKey {
   }
 
   Map<String, dynamic> toMap() => {'value': value, 'isSecret': isSecret};
+}
+
+class WorkspaceItem {
+  final String id;
+  String name;
+  final WorkspaceItemType type;
+  final List<WorkspaceItem> children;
+
+  WorkspaceItem({
+    required this.id,
+    required this.name,
+    required this.type,
+    this.children = const [],
+  });
+
+  //TO-DO WorkspaceItem.fromMap
+
+  //TO-DO toMap
 }
