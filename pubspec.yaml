@@ -2,7 +2,7 @@ name: gk_http_client
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -37,6 +37,22 @@ dependencies:
   dio: ^5.9.0
   crypto: ^3.0.7
 
+  # Gerenciamento de estado
+  provider: ^6.1.1
+
+  # Syntax highlighting
+  flutter_highlight: ^0.7.0
+
+  # Persistência
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+  # Utilitários
+  uuid: ^4.3.3
+
+  # Tipografia
+  google_fonts: ^6.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -48,12 +64,15 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
 
+  # Geração de código (Hive)
+  hive_generator: ^2.0.1
+  build_runner: ^2.4.8
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
 flutter:
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

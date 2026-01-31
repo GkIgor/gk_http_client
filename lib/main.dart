@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:gk_http_client/core/app_config.dart';
 import 'package:gk_http_client/screens/home_screen.dart';
 import 'package:gk_http_client/screens/workspace_screen.dart';
 import 'package:gk_http_client/services/navigation_service.dart';
+import 'package:gk_http_client/providers/theme_provider.dart';
+import 'package:gk_http_client/providers/request_provider.dart';
+import 'package:gk_http_client/theme/app_theme.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -10,30 +14,42 @@ void main() {
   AppConfig appConfig = AppConfig();
   appConfig.initializeInfrastructure();
 
-  runApp(Apllication());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(
+          create: (_) => RequestProvider()..loadCollections(),
+        ),
+      ],
+      child: const Application(),
+    ),
+  );
 }
 
-class Apllication extends StatelessWidget {
-  Apllication({super.key});
-
-  final Map<AppRoute, Widget Function(BuildContext)> _routes = {
-    AppRoute.home: (context) => const HomeScreen(),
-    AppRoute.workspace: (context) =>
-        WorkspaceScreen(name: NavigationService.selectedWorkspaceName ?? ''),
-  };
+class Application extends StatelessWidget {
+  const Application({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
+    final Map<AppRoute, Widget Function(BuildContext)> routes = {
+      AppRoute.home: (context) => const HomeScreen(),
+      AppRoute.workspace: (context) =>
+          WorkspaceScreen(name: NavigationService.selectedWorkspaceName ?? ''),
+    };
+
     return MaterialApp(
-      title: 'GK - Http Client',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
+      title: 'GK HTTP Client',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      themeMode: themeProvider.themeMode,
       home: ValueListenableBuilder(
         valueListenable: NavigationService.currentRoute,
         builder: (context, route, _) {
-          final builder = _routes[route];
+          final builder = routes[route];
           return builder != null ? builder(context) : const SizedBox();
         },
       ),

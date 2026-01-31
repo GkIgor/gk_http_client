@@ -1,25 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:gk_http_client/theme/app_colors.dart';
 
 class EmptyRequestEditor extends StatelessWidget {
   const EmptyRequestEditor({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        color: const Color(0xFF1E1E1E),
-        child: const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.bolt, size: 64, color: Colors.white10),
-              SizedBox(height: 16),
-              Text(
-                'Selecione uma requisição para editar',
-                style: TextStyle(color: Colors.white54),
+    return Container(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.bolt_rounded, size: 64, color: AppColors.slate300),
+            const SizedBox(height: 16),
+            Text(
+              'Select a request to start',
+              style: TextStyle(
+                color: AppColors.slate400,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
