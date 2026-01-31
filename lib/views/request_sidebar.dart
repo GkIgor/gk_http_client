@@ -35,64 +35,19 @@ class _RequestSidebarState extends State<RequestSidebar> {
       color: isDark ? AppColors.sidebarDark : AppColors.slate50,
       child: Column(
         children: [
-          // Search Header
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Container(
-              height: 36,
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
-                ),
-              ),
-              child: Row(
-                children: [
-                  const SizedBox(width: 8),
-                  Icon(
-                    Icons.search_rounded,
-                    size: 16,
-                    color: AppColors.slate400,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: isDark
-                            ? AppColors.textDark
-                            : AppColors.textLight,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Filter requests...',
-                        hintStyle: TextStyle(
-                          fontSize: 13,
-                          color: AppColors.slate400,
-                        ),
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        contentPadding: const EdgeInsets.only(bottom: 12),
-                      ),
-                      onChanged: (value) {
-                        provider.setSearchFilter(value);
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          _SearchFilter(
+            isDark: isDark,
+            controller: _searchController,
+            onChanged: (value) {
+              provider.setSearchFilter(value);
+            },
           ),
 
-          // Divider
           Divider(
             height: 1,
             color: isDark ? AppColors.borderDark : AppColors.borderLight,
           ),
 
-          // Lists
           Expanded(
             child: CustomScrollbar(
               controller: _scrollController,
@@ -101,7 +56,11 @@ class _RequestSidebarState extends State<RequestSidebar> {
                 padding: const EdgeInsets.all(8),
                 children: [
                   ...provider.filteredCollections.map((collection) {
-                    return _buildCollection(context, provider, collection);
+                    return _Collection(
+                      context: context,
+                      provider: provider,
+                      collection: collection,
+                    );
                   }),
 
                   if (provider.filteredCollections.isEmpty &&
@@ -123,15 +82,16 @@ class _RequestSidebarState extends State<RequestSidebar> {
             ),
           ),
 
-          // New Collection Button
           Divider(
             height: 1,
             color: isDark ? AppColors.borderDark : AppColors.borderLight,
           ),
+
           Padding(
             padding: const EdgeInsets.all(12),
             child: InkWell(
               onTap: () {
+                // TODO: Open collection dialog
                 final newCollection = RequestCollection(
                   name: 'New Collection',
                   requests: [],
@@ -176,12 +136,21 @@ class _RequestSidebarState extends State<RequestSidebar> {
       ),
     );
   }
+}
 
-  Widget _buildCollection(
-    BuildContext context,
-    RequestProvider provider,
-    RequestCollection collection,
-  ) {
+class _Collection extends StatelessWidget {
+  const _Collection({
+    required this.context,
+    required this.provider,
+    required this.collection,
+  });
+
+  final BuildContext context;
+  final RequestProvider provider;
+  final RequestCollection collection;
+
+  @override
+  Widget build(BuildContext context) {
     return CollectionFolder(
       collection: collection,
       isExpanded: collection.isExpanded,
@@ -206,6 +175,60 @@ class _RequestSidebarState extends State<RequestSidebar> {
             },
           );
         }).toList(),
+      ),
+    );
+  }
+}
+
+class _SearchFilter extends StatelessWidget {
+  const _SearchFilter({
+    required this.isDark,
+    required this.controller,
+    required this.onChanged,
+  });
+
+  final bool isDark;
+  final TextEditingController controller;
+  final Function(String) onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: Container(
+        height: 36,
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: isDark ? AppColors.borderDark : AppColors.borderLight,
+          ),
+        ),
+        child: Row(
+          children: [
+            const SizedBox(width: 8),
+            Icon(Icons.search_rounded, size: 16, color: AppColors.slate400),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextField(
+                controller: controller,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark ? AppColors.textDark : AppColors.textLight,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Filter requests...',
+                  hintStyle: TextStyle(fontSize: 13, color: AppColors.slate400),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  contentPadding: const EdgeInsets.only(bottom: 12),
+                ),
+                onChanged: onChanged,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -114,7 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             mainAxisSpacing: 20,
                             childAspectRatio: 1.5,
                           ),
-                      itemCount: _workspaces.length + 1, // +1 para botão Add
+                      itemCount: _workspaces.length + 1,
                       itemBuilder: (context, index) {
                         if (index == 0) {
                           return _buildAddButton(context);

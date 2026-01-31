@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gk_http_client/providers/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:gk_http_client/core/app_config.dart';
 import 'package:gk_http_client/screens/home_screen.dart';
@@ -21,6 +22,7 @@ void main() {
         ChangeNotifierProvider(
           create: (_) => RequestProvider()..loadCollections(),
         ),
+        ChangeNotifierProvider(create: (_) => UserProvider()..loadUser()),
       ],
       child: const Application(),
     ),
