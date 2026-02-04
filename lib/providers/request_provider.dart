@@ -136,67 +136,14 @@ class RequestProvider with ChangeNotifier {
         .toList();
   }
 
-  void loadMockData() {
-    final collection1 = RequestCollection(
-      name: 'User API v1',
-      requests: [
-        HttpRequest(
-          name: 'Get All Users',
-          method: HttpMethod.get,
-          url: 'https://api.example.com/v1/users',
-          queryParams: {'limit': '10', 'page': '1'},
-        ),
-        HttpRequest(
-          name: 'Create Profile',
-          method: HttpMethod.post,
-          url: 'https://api.example.com/v1/users/profile',
-        ),
-        HttpRequest(
-          name: 'Update Settings',
-          method: HttpMethod.patch,
-          url: 'https://api.example.com/v1/users/settings',
-        ),
-      ],
-    );
-
-    final collection2 = RequestCollection(
-      name: 'Auth Service',
-      requests: [
-        HttpRequest(
-          name: 'Login User',
-          method: HttpMethod.post,
-          url: 'https://api.example.com/auth/login',
-        ),
-      ],
-    );
-
-    _collections = [collection1, collection2];
+  Future<void> loadCollections() async {
+    _collections = await _repository.getAll();
 
     if (_collections.isNotEmpty && _collections[0].requests.isNotEmpty) {
       _selectedRequest = _collections[0].requests[0];
     }
-    _saveCollections();
 
     notifyListeners();
-  }
-
-  Future<void> loadCollections() async {
-    try {
-      _collections = await _repository.getAll();
-
-      if (_collections.isEmpty) {
-        loadMockData();
-        return;
-      }
-
-      if (_collections.isNotEmpty && _collections[0].requests.isNotEmpty) {
-        _selectedRequest = _collections[0].requests[0];
-      }
-
-      notifyListeners();
-    } catch (e) {
-      loadMockData();
-    }
   }
 
   Future<void> _saveCollections() async {

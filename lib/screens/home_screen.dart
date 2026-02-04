@@ -3,6 +3,7 @@ import 'package:gk_http_client/models/workspace_models.dart';
 import 'package:gk_http_client/repository/workspace_repository.dart';
 import 'package:gk_http_client/services/navigation_service.dart';
 import 'package:gk_http_client/theme/app_colors.dart';
+import 'package:gk_http_client/widgets/icon_selector.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,6 +14,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final WorkspaceRepository _repository = WorkspaceRepository();
+  final GlobalKey _buttonKey = GlobalKey();
   List<WorkspaceModel> _workspaces = [];
   bool _isLoading = true;
 
@@ -46,7 +48,6 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             // Header
             Container(
-              height: 200,
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
               decoration: BoxDecoration(
@@ -172,9 +173,36 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(
-                    Icons.folder_outlined,
-                    color: AppColors.primary,
+                  child: InkWell(
+                    key: _buttonKey,
+                    onTap: () {
+                      // Button Position
+                      final RenderBox button =
+                          _buttonKey.currentContext!.findRenderObject()
+                              as RenderBox;
+
+                      final RenderBox overlay =
+                          Overlay.of(context).context.findRenderObject()
+                              as RenderBox;
+
+                      // Position Relative
+                      final RelativeRect position = RelativeRect.fromRect(
+                        Rect.fromPoints(
+                          button.localToGlobal(Offset.zero, ancestor: overlay),
+                          button.localToGlobal(
+                            button.size.bottomRight(Offset.zero),
+                            ancestor: overlay,
+                          ),
+                        ),
+                        Offset.zero & overlay.size,
+                      );
+
+                      _openIconSelector(context, position);
+                    },
+                    child: const Icon(
+                      Icons.folder_outlined,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
                 PopupMenuButton(
@@ -282,10 +310,7 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('Create Workspace'),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Workspace Name',
-            hintText: 'e.g. My API Project',
-          ),
+          decoration: const InputDecoration(labelText: 'Workspace Name'),
           autofocus: true,
         ),
         actions: [
@@ -308,6 +333,20 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _openIconSelector(BuildContext context, RelativeRect position) {
+    showMenu(
+      context: context,
+      position: position,
+      items: [
+        PopupMenuItem(
+          enabled: false,
+          value: 'icon_selector',
+          child: SizedBox(width: 250, height: 150, child: const IconSelector()),
+        ),
+      ],
     );
   }
 }
