@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gk_http_client/providers/user_provider.dart';
+import 'package:gk_http_client/providers/workspace_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:gk_http_client/core/app_config.dart';
 import 'package:gk_http_client/screens/home_screen.dart';
@@ -20,9 +21,12 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(
-          create: (_) => RequestProvider()..loadCollections(),
+          create: (_) => RequestProvider(),
         ),
         ChangeNotifierProvider(create: (_) => UserProvider()..loadUser()),
+        ChangeNotifierProvider(
+          create: (_) => WorkspaceProvider()..loadWorkspaces(),
+        ),
       ],
       child: const Application(),
     ),
@@ -38,8 +42,9 @@ class Application extends StatelessWidget {
 
     final Map<AppRoute, Widget Function(BuildContext)> routes = {
       AppRoute.home: (context) => const HomeScreen(),
-      AppRoute.workspace: (context) =>
-          WorkspaceScreen(name: NavigationService.selectedWorkspaceName ?? ''),
+      AppRoute.workspace: (context) {
+        return WorkspaceScreen();
+      },
     };
 
     return MaterialApp(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gk_http_client/providers/user_provider.dart';
+import 'package:gk_http_client/providers/workspace_provider.dart';
 import 'package:gk_http_client/widgets/environments_selector.dart';
 import 'package:gk_http_client/widgets/theme_toggle.dart';
 import 'package:gk_http_client/widgets/user_avatar.dart';
@@ -12,9 +13,7 @@ import 'package:gk_http_client/views/request_sidebar.dart';
 import 'package:gk_http_client/widgets/empty_request_editor.dart';
 
 class WorkspaceScreen extends StatefulWidget {
-  const WorkspaceScreen({super.key, required this.name});
-
-  final String name;
+  const WorkspaceScreen({super.key});
 
   @override
   State<WorkspaceScreen> createState() => _WorkspaceScreenState();
@@ -23,6 +22,13 @@ class WorkspaceScreen extends StatefulWidget {
 class _WorkspaceScreenState extends State<WorkspaceScreen> {
   @override
   Widget build(BuildContext context) {
+    final wsProvider = Provider.of<WorkspaceProvider>(context);
+    String name = 'No Workspace';
+
+    if (wsProvider.currentWorkspace != null) {
+      name = wsProvider.currentWorkspace!.name;
+    }
+
     final themeProvider = Provider.of<ThemeProvider>(context);
     final requestProvider = Provider.of<RequestProvider>(context);
     final userProvider = Provider.of<UserProvider>(context);
@@ -49,7 +55,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
             child: Row(
               children: [
                 // Logo & Workspace Name
-                WorkspaceTopBarLogo(name: widget.name),
+                WorkspaceTopBarLogo(name: name),
 
                 const VerticalDivider(width: 32, indent: 12, endIndent: 12),
 

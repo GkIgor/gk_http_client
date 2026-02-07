@@ -55,4 +55,9 @@ class WorkspaceRepository {
     final file = File('$_path/${ws.id}.json');
     await file.writeAsString(jsonEncode(map));
   }
+
+  Future<void> delete(String id) async {
+    final file = File('$_path/$id.json');
+    await file.delete();
+  }
 }

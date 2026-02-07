@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gk_http_client/providers/workspace_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:gk_http_client/models/collection_model.dart';
 import 'package:gk_http_client/providers/request_provider.dart';
@@ -27,7 +28,15 @@ class _RequestSidebarState extends State<RequestSidebar> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<RequestProvider>(context);
+    final requestProvider = Provider.of<RequestProvider>(context);
+    final WorkspaceProvider wsProvider = Provider.of<WorkspaceProvider>(
+      context,
+    );
+
+    final workspaceId = wsProvider.currentWorkspace!.id;
+
+    requestProvider.loadCollections(workspaceId);
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
@@ -39,7 +48,7 @@ class _RequestSidebarState extends State<RequestSidebar> {
             isDark: isDark,
             controller: _searchController,
             onChanged: (value) {
-              provider.setSearchFilter(value);
+              requestProvider.setSearchFilter(value);
             },
           ),
 
@@ -55,16 +64,16 @@ class _RequestSidebarState extends State<RequestSidebar> {
                 controller: _scrollController,
                 padding: const EdgeInsets.all(8),
                 children: [
-                  ...provider.filteredCollections.map((collection) {
+                  ...requestProvider.filteredCollections.map((collection) {
                     return _Collection(
                       context: context,
-                      provider: provider,
+                      provider: requestProvider,
                       collection: collection,
                     );
                   }),
 
-                  if (provider.filteredCollections.isEmpty &&
-                      provider.searchFilter.isNotEmpty)
+                  if (requestProvider.filteredCollections.isEmpty &&
+                      requestProvider.searchFilter.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Center(
@@ -95,8 +104,9 @@ class _RequestSidebarState extends State<RequestSidebar> {
                 final newCollection = RequestCollection(
                   name: 'New Collection',
                   requests: [],
+                  workspaceId: workspaceId,
                 );
-                provider.addCollection(newCollection);
+                requestProvider.addCollection(newCollection);
               },
               borderRadius: BorderRadius.circular(6),
               child: Container(

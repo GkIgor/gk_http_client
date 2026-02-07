@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gk_http_client/models/http_request.dart';
 import 'package:gk_http_client/models/http_response.dart';
 import 'package:gk_http_client/models/collection_model.dart';
-import 'package:gk_http_client/models/http_method.dart';
+
 import 'package:gk_http_client/repository/collection_repository.dart';
 
 class RequestProvider with ChangeNotifier {
@@ -136,8 +136,8 @@ class RequestProvider with ChangeNotifier {
         .toList();
   }
 
-  Future<void> loadCollections() async {
-    _collections = await _repository.getAll();
+  Future<void> loadCollections(String workspaceId) async {
+    _collections = await _repository.getAll(workspaceId);
 
     if (_collections.isNotEmpty && _collections[0].requests.isNotEmpty) {
       _selectedRequest = _collections[0].requests[0];

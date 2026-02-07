@@ -7,7 +7,7 @@ import 'package:gk_http_client/utils/utils.dart';
 class CollectionRepository {
   final String _path = AppConfig.collectionsDir;
 
-  Future<List<RequestCollection>> getAll() async {
+  Future<List<RequestCollection>> getAll(String workspaceId) async {
     final dir = Directory(_path);
 
     if (!dir.existsSync()) {
@@ -25,6 +25,9 @@ class CollectionRepository {
       try {
         final content = file.readAsStringSync();
         final Map<String, dynamic> map = jsonDecode(content);
+
+        if (map['workspaceId'] != workspaceId) continue;
+
         final String? fileSignature = map['signature'];
 
         final dataToValidate = Map<String, dynamic>.from(map)
@@ -71,12 +74,22 @@ class CollectionRepository {
     }
   }
 
-  Future<void> deleteAll() async {
+  Future<void> deleteAll(String workspaceId) async {
     final dir = Directory(_path);
     if (dir.existsSync()) {
       final files = dir.listSync().where((f) => f.path.endsWith('.json'));
-      for (var file in files) {
-        await file.delete();
+      for (var entry in files) {
+        final file = File(entry.path);
+
+        if (file.statSync().size > 10 * 1024 * 1024) {
+          await file.delete();
+          continue;
+        }
+
+        if (jsonDecode(await file.readAsString())['workspaceId'] ==
+            workspaceId) {
+          await file.delete();
+        }
       }
     }
   }

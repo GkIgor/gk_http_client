@@ -3,12 +3,14 @@ enum WorkspaceItemType { folder, request }
 class WorkspaceModel {
   final String id;
   String name;
+  String icon;
   Map<String, WorkspaceSecretKey> environments = {};
 
   WorkspaceModel({
     required this.name,
     String? id,
     Map<String, WorkspaceSecretKey>? environments,
+    this.icon = 'folder',
   }) : id = id ?? "ws_${DateTime.now().microsecondsSinceEpoch}",
        environments = environments ?? {};
 
@@ -16,6 +18,7 @@ class WorkspaceModel {
     return {
       'id': id,
       'name': name,
+      'icon': icon,
       'environments': environments.map((k, v) => MapEntry(k, v.toMap())),
     };
   }
@@ -36,6 +39,7 @@ class WorkspaceModel {
     return WorkspaceModel(
       name: map['name'],
       id: map['id'],
+      icon: map['icon'],
       environments: loadedEnvs,
     );
   }

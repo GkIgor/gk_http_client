@@ -7,15 +7,18 @@ class NavigationService {
     AppRoute.home,
   );
 
-  static String? selectedWorkspaceName;
-
-  static void navigateTo(AppRoute route, {String? workspaceName}) {
-    selectedWorkspaceName = workspaceName;
-    currentRoute.value = route;
+  static void navigateTo(AppRoute route) {
+    switch (route) {
+      case AppRoute.home:
+        goBack();
+        break;
+      case AppRoute.workspace:
+        currentRoute.value = route;
+        break;
+    }
   }
 
   static void goBack() {
-    selectedWorkspaceName = null;
     currentRoute.value = .home;
   }
 }

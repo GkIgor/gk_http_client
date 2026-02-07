@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:gk_http_client/models/workspace_models.dart';
-import 'package:gk_http_client/repository/workspace_repository.dart';
+import 'package:gk_http_client/providers/workspace_provider.dart';
 import 'package:gk_http_client/services/navigation_service.dart';
 import 'package:gk_http_client/theme/app_colors.dart';
-import 'package:gk_http_client/widgets/icon_selector.dart';
+import 'package:gk_http_client/widgets/home_header.dart';
+import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,231 +14,185 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final WorkspaceRepository _repository = WorkspaceRepository();
   final GlobalKey _buttonKey = GlobalKey();
-  List<WorkspaceModel> _workspaces = [];
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadWorkspaces();
-  }
-
-  Future<void> _loadWorkspaces() async {
-    try {
-      final workspaces = await _repository.getAll();
-      setState(() {
-        _workspaces = workspaces;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-      // TODO: Show error
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    final WorkspaceProvider wsProvider = Provider.of<WorkspaceProvider>(
+      context,
+    );
+
     return Scaffold(
       body: Container(
         color: Theme.of(context).scaffoldBackgroundColor,
-        child: Column(
-          children: [
-            // Header
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-                border: Border(
-                  bottom: BorderSide(
-                    color: isDark
-                        ? AppColors.borderDark
-                        : AppColors.borderLight,
-                  ),
+        child: ListenableBuilder(
+          listenable: wsProvider,
+          builder: (context, child) {
+            if (wsProvider.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            return Column(
+              children: [
+                // Header
+                HomeHeader(isDark: isDark),
+
+                // Grid
+                Expanded(
+                  child: wsProvider.workspaces.isEmpty
+                      ? _buildEmptyState(context, wsProvider)
+                      : GridView.builder(
+                          padding: const EdgeInsets.all(40),
+                          gridDelegate:
+                              const SliverGridDelegateWithMaxCrossAxisExtent(
+                                maxCrossAxisExtent: 400,
+                                crossAxisSpacing: 20,
+                                mainAxisSpacing: 20,
+                                childAspectRatio: 1.5,
+                              ),
+                          itemCount: wsProvider.workspaces.length + 1,
+                          itemBuilder: (context, index) {
+                            if (index == 0) {
+                              return _buildAddButton(context, wsProvider);
+                            }
+
+                            WorkspaceModel ws =
+                                wsProvider.workspaces[index - 1];
+
+                            IconData icon =
+                                WorkspaceProvider.icons[ws.icon] ??
+                                Icons.folder;
+
+                            Icon currentIcon = Icon(
+                              icon,
+                              color: WorkspaceProvider.iconColors[ws.icon],
+                            );
+
+                            return _buildWorkspaceCard(
+                              context,
+                              ws,
+                              currentIcon,
+                              (value) {
+                                setState(() {
+                                  wsProvider.removeWorkspace(ws.id);
+                                });
+                              },
+                            );
+                          },
+                        ),
                 ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWorkspaceCard(
+    BuildContext context,
+    WorkspaceModel workspace,
+    Icon currentIcon,
+    Function(String) onDelete,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Material(
+      color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+      borderRadius: BorderRadius.circular(12),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () {
+          Provider.of<WorkspaceProvider>(
+            context,
+            listen: false,
+          ).openWorkspace(workspace.id);
+
+          NavigationService.navigateTo(AppRoute.workspace);
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Ink(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isDark ? AppColors.borderDark : AppColors.borderLight,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.grid_view_rounded,
-                          color: Colors.white,
-                          size: 24,
-                        ),
+                  Material(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    child: InkWell(
+                      key: _buttonKey,
+                      onTap: () {
+                        final RenderBox button =
+                            _buttonKey.currentContext!.findRenderObject()
+                                as RenderBox;
+                        final Offset buttonPosition = button.localToGlobal(
+                          Offset.zero,
+                        );
+
+                        _openIconSelector(
+                          context,
+                          buttonPosition,
+                          button.size,
+                          workspace.id,
+                        );
+                      },
+                      hoverColor: AppColors.primary.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: currentIcon,
                       ),
-                      const SizedBox(width: 16),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Seus Workspaces',
-                            style: Theme.of(context).textTheme.displaySmall,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Manage and organize your API projects',
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: AppColors.slate500),
-                          ),
-                        ],
+                    ),
+                  ),
+                  PopupMenuButton(
+                    icon: Icon(Icons.more_horiz, color: AppColors.slate400),
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Text('Delete'),
                       ),
                     ],
+                    onSelected: onDelete,
                   ),
                 ],
               ),
-            ),
-
-            // Grid
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _workspaces.isEmpty
-                  ? _buildEmptyState(context)
-                  : GridView.builder(
-                      padding: const EdgeInsets.all(40),
-                      gridDelegate:
-                          const SliverGridDelegateWithMaxCrossAxisExtent(
-                            maxCrossAxisExtent: 400,
-                            crossAxisSpacing: 20,
-                            mainAxisSpacing: 20,
-                            childAspectRatio: 1.5,
-                          ),
-                      itemCount: _workspaces.length + 1,
-                      itemBuilder: (context, index) {
-                        if (index == 0) {
-                          return _buildAddButton(context);
-                        }
-                        return _buildWorkspaceCard(
-                          context,
-                          _workspaces[index - 1],
-                        );
-                      },
-                    ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWorkspaceCard(BuildContext context, WorkspaceModel workspace) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return InkWell(
-      onTap: () {
-        NavigationService.navigateTo(
-          AppRoute.workspace,
-          workspaceName: workspace.name,
-        );
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isDark ? AppColors.borderDark : AppColors.borderLight,
-          ),
-          boxShadow: [
-            if (!isDark)
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+              const Spacer(),
+              Text(
+                workspace.name,
+                style: Theme.of(context).textTheme.titleLarge,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: InkWell(
-                    key: _buttonKey,
-                    onTap: () {
-                      // Button Position
-                      final RenderBox button =
-                          _buttonKey.currentContext!.findRenderObject()
-                              as RenderBox;
-
-                      final RenderBox overlay =
-                          Overlay.of(context).context.findRenderObject()
-                              as RenderBox;
-
-                      // Position Relative
-                      final RelativeRect position = RelativeRect.fromRect(
-                        Rect.fromPoints(
-                          button.localToGlobal(Offset.zero, ancestor: overlay),
-                          button.localToGlobal(
-                            button.size.bottomRight(Offset.zero),
-                            ancestor: overlay,
-                          ),
-                        ),
-                        Offset.zero & overlay.size,
-                      );
-
-                      _openIconSelector(context, position);
-                    },
-                    child: const Icon(
-                      Icons.folder_outlined,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ),
-                PopupMenuButton(
-                  icon: Icon(Icons.more_horiz, color: AppColors.slate400),
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(value: 'delete', child: Text('Delete')),
-                  ],
-                  onSelected: (value) {
-                    // TODO: Implement delete
-                  },
-                ),
-              ],
-            ),
-            const Spacer(),
-            Text(
-              workspace.name,
-              style: Theme.of(context).textTheme.titleLarge,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '${workspace.environments.length} environments',
-              style: TextStyle(color: AppColors.slate500, fontSize: 13),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                '${workspace.environments.length} environments',
+                style: TextStyle(color: AppColors.slate500, fontSize: 13),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildAddButton(BuildContext context) {
+  Widget _buildAddButton(
+    BuildContext context,
+    WorkspaceProvider workspaceProvider,
+  ) {
     return InkWell(
       onTap: () {
-        _showCreateWorkspaceDialog(context);
+        _showCreateWorkspaceDialog(context, workspaceProvider);
       },
       borderRadius: BorderRadius.circular(12),
       child: Container(
@@ -274,7 +229,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
+  Widget _buildEmptyState(
+    BuildContext context,
+    WorkspaceProvider workspaceProvider,
+  ) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -287,7 +245,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () => _showCreateWorkspaceDialog(context),
+            onPressed: () =>
+                _showCreateWorkspaceDialog(context, workspaceProvider),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
@@ -301,7 +260,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showCreateWorkspaceDialog(BuildContext context) {
+  void _showCreateWorkspaceDialog(
+    BuildContext context,
+    WorkspaceProvider workspaceProvider,
+  ) {
     final controller = TextEditingController();
 
     showDialog(
@@ -322,10 +284,10 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () async {
               if (controller.text.isNotEmpty) {
                 final ws = WorkspaceModel(name: controller.text);
-                await _repository.save(ws);
+                await workspaceProvider.addWorkspace(ws);
+
                 if (context.mounted) {
                   Navigator.pop(context);
-                  _loadWorkspaces();
                 }
               }
             },
@@ -336,16 +298,108 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _openIconSelector(BuildContext context, RelativeRect position) {
-    showMenu(
+  void _openIconSelector(
+    BuildContext context,
+    Offset buttonPosition,
+    Size buttonSize,
+    String ws,
+  ) {
+    showGeneralDialog(
       context: context,
-      position: position,
-      items: [
-        PopupMenuItem(
-          enabled: false,
-          value: 'icon_selector',
-          child: SizedBox(width: 250, height: 150, child: const IconSelector()),
-        ),
+      barrierColor: Colors.black.withValues(alpha: .0), // Transparent barrier
+      barrierDismissible: true,
+      barrierLabel: 'Icon Selector',
+      transitionDuration: const Duration(milliseconds: 200),
+      pageBuilder:
+          (
+            BuildContext dialogContext,
+            Animation<double> animation,
+            Animation<double> secondaryAnimation,
+          ) {
+            final RenderBox overlay =
+                Overlay.of(context).context.findRenderObject() as RenderBox;
+            final Size overlaySize = overlay.size;
+
+            const double selectorWidth = 250;
+            const double selectorHeight = 150;
+
+            double left = buttonPosition.dx;
+            double top = buttonPosition.dy + buttonSize.height;
+
+            if (left + selectorWidth > overlaySize.width) {
+              left = overlaySize.width - selectorWidth;
+            }
+
+            if (top + selectorHeight > overlaySize.height) {
+              top = buttonPosition.dy - selectorHeight;
+              if (top < 0) {
+                top = 0;
+              }
+            }
+
+            return Stack(
+              children: <Widget>[
+                Positioned(
+                  left: left,
+                  top: top,
+                  child: Material(
+                    color: Theme.of(context).cardColor,
+                    elevation: 8.0,
+                    borderRadius: BorderRadius.circular(8.0),
+                    child: SizedBox(
+                      width: selectorWidth,
+                      height: selectorHeight,
+                      child: _IconSelector(workspaceId: ws),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+      transitionBuilder:
+          (
+            BuildContext context,
+            Animation<double> animation,
+            Animation<double> secondaryAnimation,
+            Widget child,
+          ) {
+            return FadeTransition(
+              opacity: CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOut,
+              ),
+              child: child,
+            );
+          },
+    );
+  }
+}
+
+class _IconSelector extends StatelessWidget {
+  const _IconSelector({required this.workspaceId});
+
+  final String workspaceId;
+
+  @override
+  Widget build(BuildContext context) {
+    WorkspaceProvider workspaceProvider = Provider.of<WorkspaceProvider>(
+      context,
+    );
+
+    final icons = WorkspaceProvider.icons;
+
+    return GridView.count(
+      crossAxisCount: 3,
+      crossAxisSpacing: 16,
+      children: [
+        for (final entry in icons.entries)
+          IconButton(
+            icon: Icon(entry.value),
+            onPressed: () {
+              workspaceProvider.updateWorkspaceIcon(workspaceId, entry.key);
+              Navigator.pop(context);
+            },
+          ),
       ],
     );
   }
