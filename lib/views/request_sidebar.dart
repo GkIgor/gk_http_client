@@ -96,54 +96,94 @@ class _RequestSidebarState extends State<RequestSidebar> {
             color: isDark ? AppColors.borderDark : AppColors.borderLight,
           ),
 
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: InkWell(
-              onTap: () {
-                // TODO: Open collection dialog
-                final newCollection = RequestCollection(
-                  name: 'New Collection',
-                  requests: [],
-                  workspaceId: workspaceId,
-                );
-                requestProvider.addCollection(newCollection);
-              },
-              borderRadius: BorderRadius.circular(6),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    style: BorderStyle.solid,
-                    color: isDark
-                        ? AppColors.borderDark
-                        : AppColors.borderLight,
+          _NewWorkspaceButton(isDark: isDark),
+        ],
+      ),
+    );
+  }
+}
+
+class _NewWorkspaceButton extends StatelessWidget {
+  const _NewWorkspaceButton({required this.isDark});
+
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: Material(
+        borderRadius: BorderRadius.circular(6),
+        child: InkWell(
+          onTap: () {
+            _openNewCollectionDialog(context, isDark);
+          },
+          borderRadius: BorderRadius.circular(6),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.add_rounded, size: 16, color: AppColors.slate500),
+                const SizedBox(width: 4),
+                Text(
+                  'New Collection',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.slate500,
                   ),
-                  borderRadius: BorderRadius.circular(6),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openNewCollectionDialog(BuildContext context, bool isDark) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            width: 300,
+            height: 400,
+            child: Column(
+              children: [
+                const Icon(Icons.create_new_folder),
+                const SizedBox(width: 8),
+                const Text('Create New Collection'),
+                Divider(
+                  height: 1,
+                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                ),
+                Row(
                   children: [
-                    Icon(
-                      Icons.add_rounded,
-                      size: 16,
-                      color: AppColors.slate500,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'New Collection',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.slate500,
+                    const Text('COLLECTION NAME'),
+                    TextField(
+                      decoration: InputDecoration(
+                        labelText: 'e.g. Payments API',
+                        labelStyle: TextStyle(
+                          color: isDark
+                              ? AppColors.textDark
+                              : AppColors.textLight,
+                        ),
                       ),
+                      autofocus: true,
                     ),
                   ],
                 ),
-              ),
+              ],
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
