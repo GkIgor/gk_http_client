@@ -143,6 +143,20 @@ class _NewWorkspaceButton extends StatelessWidget {
   }
 
   void _openNewCollectionDialog(BuildContext context, bool isDark) {
+    final Map<String, IconData> icons = {
+      'folder': Icons.folder_rounded,
+      'api': Icons.api_rounded,
+      'webhook': Icons.webhook_rounded,
+      'storage': Icons.storage_rounded,
+    };
+
+    final Map<String, Color> colors = {
+      '#8b5cf6': AppColors.primary,
+      '#10b981': const Color(0xFF10b981),
+      '#f59e0b': const Color(0xFFf59e0b),
+      '#f43f5e': const Color(0xFFf43f5e),
+    };
+
     showDialog(
       context: context,
       builder: (context) {
@@ -150,40 +164,192 @@ class _NewWorkspaceButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            width: 300,
-            height: 400,
-            child: Column(
+          child: _NewWorkspaceDialogBody(
+            icons: icons,
+            colors: colors,
+            isDark: isDark,
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _NewWorkspaceDialogBody extends StatefulWidget {
+  const _NewWorkspaceDialogBody({
+    required this.icons,
+    required this.colors,
+    required this.isDark,
+  });
+
+  final Map<String, IconData> icons;
+  final Map<String, Color> colors;
+  final bool isDark;
+
+  @override
+  State<_NewWorkspaceDialogBody> createState() =>
+      _NewWorkspaceDialogBodyState();
+}
+
+class _NewWorkspaceDialogBodyState extends State<_NewWorkspaceDialogBody> {
+  Color currentColor = AppColors.primary;
+  late TextEditingController _descriptionController;
+
+  @override
+  void initState() {
+    _descriptionController = TextEditingController();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        width: 500,
+        height: 400,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
                 const Icon(Icons.create_new_folder),
                 const SizedBox(width: 8),
                 const Text('Create New Collection'),
-                Divider(
-                  height: 1,
-                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
+              ],
+            ),
+            Divider(
+              height: 1,
+              color: widget.isDark
+                  ? AppColors.borderDark
+                  : AppColors.borderLight,
+            ),
+            const SizedBox(height: 25),
+            const Text('COLLECTION NAME'),
+            const SizedBox(height: 12),
+            TextField(
+              decoration: InputDecoration(
+                hintText: 'e.g. Payments API',
+                hintStyle: TextStyle(
+                  color: widget.isDark
+                      ? AppColors.textDark
+                      : AppColors.textLight,
                 ),
-                Row(
+              ),
+              autofocus: true,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('COLLECTION NAME'),
-                    TextField(
-                      decoration: InputDecoration(
-                        labelText: 'e.g. Payments API',
-                        labelStyle: TextStyle(
-                          color: isDark
-                              ? AppColors.textDark
-                              : AppColors.textLight,
-                        ),
-                      ),
-                      autofocus: true,
+                    Text('SELECT ICON'),
+                    // const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        for (final entry in widget.icons.entries) ...[
+                          _buildIconSelector(entry),
+                          const SizedBox(width: 6),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 14),
+                Column(
+                  children: [
+                    Text('FOLDER COLOR'),
+                    Row(
+                      children: [
+                        for (final color in widget.colors.entries) ...[
+                          _buildColorSelector(
+                            color,
+                            color.value == currentColor,
+                          ),
+                          const SizedBox(width: 6),
+                        ],
+                      ],
                     ),
                   ],
                 ),
               ],
             ),
-          ),
-        );
+            SizedBox(height: 24),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('DESCRIPTION (OPTIONAL)'),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _descriptionController,
+                  maxLines: 8,
+                  minLines: 4,
+                  keyboardType: TextInputType.multiline,
+                  decoration: InputDecoration(
+                    hintText:
+                        'Briefly describe the purpose of this collection...',
+                    alignLabelWithHint: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIconSelector(MapEntry<String, IconData> entry) {
+    return InkWell(
+      onTap: () {
+        debugPrint('Selected icon: ${entry.key}');
       },
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.borderDark),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        padding: EdgeInsets.all(8),
+        child: Icon(entry.value),
+      ),
+    );
+  }
+
+  Widget _buildColorSelector(MapEntry<String, Color> entry, bool isSelected) {
+    return InkWell(
+      onTap: () {
+        setState(() {
+          currentColor = entry.value;
+        });
+      },
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: isSelected ? entry.value : Colors.transparent,
+            width: 2,
+          ),
+        ),
+        padding: const EdgeInsets.all(3),
+        child: Container(
+          decoration: BoxDecoration(color: entry.value, shape: BoxShape.circle),
+        ),
+      ),
     );
   }
 }
