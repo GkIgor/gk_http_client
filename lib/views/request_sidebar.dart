@@ -193,6 +193,7 @@ class _NewWorkspaceDialogBody extends StatefulWidget {
 
 class _NewWorkspaceDialogBodyState extends State<_NewWorkspaceDialogBody> {
   Color currentColor = AppColors.primary;
+  IconData? currentIcon;
   late TextEditingController _descriptionController;
 
   @override
@@ -213,7 +214,7 @@ class _NewWorkspaceDialogBodyState extends State<_NewWorkspaceDialogBody> {
       child: Container(
         padding: const EdgeInsets.all(16),
         width: 500,
-        height: 400,
+        height: 480,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -256,7 +257,7 @@ class _NewWorkspaceDialogBodyState extends State<_NewWorkspaceDialogBody> {
                     Row(
                       children: [
                         for (final entry in widget.icons.entries) ...[
-                          _buildIconSelector(entry),
+                          _buildIconSelector(entry, entry.value == currentIcon),
                           const SizedBox(width: 6),
                         ],
                       ],
@@ -304,25 +305,92 @@ class _NewWorkspaceDialogBodyState extends State<_NewWorkspaceDialogBody> {
                 ),
               ],
             ),
+            Column(
+              children: [
+                SizedBox(height: 24),
+                Divider(height: 1),
+                SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          foregroundColor: widget.isDark
+                              ? AppColors.textDark
+                              : AppColors.textLight,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side: BorderSide(
+                              color: widget.isDark
+                                  ? AppColors.borderDark
+                                  : AppColors.borderLight,
+                            ),
+                          ),
+                        ),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          // TODO: Implement collection creation
+                          Navigator.of(context).pop();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text('Create Collection'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildIconSelector(MapEntry<String, IconData> entry) {
+  Widget _buildIconSelector(MapEntry<String, IconData> entry, bool isSelected) {
     return InkWell(
       onTap: () {
-        debugPrint('Selected icon: ${entry.key}');
+        setState(() {
+          currentIcon = entry.value;
+        });
       },
       borderRadius: BorderRadius.circular(8),
       child: Container(
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.borderDark),
+          border: Border.all(
+            width: 1.5,
+            color: isSelected
+                ? AppColors.primary.withValues(alpha: .9)
+                : (widget.isDark
+                      ? AppColors.borderDark
+                      : AppColors.borderLight),
+          ),
+
           borderRadius: BorderRadius.circular(8),
         ),
         padding: EdgeInsets.all(8),
-        child: Icon(entry.value),
+        child: Icon(
+          entry.value,
+          color: isSelected
+              ? AppColors.primary.withValues(alpha: .9)
+              : AppColors.slate500,
+        ),
       ),
     );
   }
