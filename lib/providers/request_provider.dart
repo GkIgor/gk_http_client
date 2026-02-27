@@ -24,7 +24,7 @@ class RequestProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String get searchFilter => _searchFilter;
 
-  void addCollection(RequestCollection collection) {
+  Future<void> addCollection(RequestCollection collection) async {
     _collections.add(collection);
     _saveCollections();
     notifyListeners();

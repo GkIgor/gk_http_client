@@ -193,18 +193,21 @@ class _NewWorkspaceDialogBody extends StatefulWidget {
 
 class _NewWorkspaceDialogBodyState extends State<_NewWorkspaceDialogBody> {
   Color currentColor = AppColors.primary;
-  IconData? currentIcon;
-  late TextEditingController _descriptionController;
+  IconData currentIcon = Icons.folder_rounded;
+  late TextEditingController _collectionDescriptionController;
+  late TextEditingController _collectionNameController;
 
   @override
   void initState() {
-    _descriptionController = TextEditingController();
+    _collectionDescriptionController = TextEditingController();
+    _collectionNameController = TextEditingController();
     super.initState();
   }
 
   @override
   void dispose() {
-    _descriptionController.dispose();
+    _collectionDescriptionController.dispose();
+    _collectionNameController.dispose();
     super.dispose();
   }
 
@@ -235,12 +238,13 @@ class _NewWorkspaceDialogBodyState extends State<_NewWorkspaceDialogBody> {
             const Text('COLLECTION NAME'),
             const SizedBox(height: 12),
             TextField(
+              controller: _collectionNameController,
               decoration: InputDecoration(
                 hintText: 'e.g. Payments API',
                 hintStyle: TextStyle(
-                  color: widget.isDark
-                      ? AppColors.textDark
-                      : AppColors.textLight,
+                  color:
+                      (widget.isDark ? AppColors.textDark : AppColors.textLight)
+                          .withValues(alpha: 0.2),
                 ),
               ),
               autofocus: true,
@@ -290,13 +294,21 @@ class _NewWorkspaceDialogBodyState extends State<_NewWorkspaceDialogBody> {
                 Text('DESCRIPTION (OPTIONAL)'),
                 const SizedBox(height: 8),
                 TextField(
-                  controller: _descriptionController,
+                  controller: _collectionDescriptionController,
                   maxLines: 8,
                   minLines: 4,
                   keyboardType: TextInputType.multiline,
                   decoration: InputDecoration(
                     hintText:
                         'Briefly describe the purpose of this collection...',
+                    hintStyle: TextStyle(
+                      color:
+                          (widget.isDark
+                                  ? AppColors.textDark
+                                  : AppColors.textLight)
+                              .withValues(alpha: 0.2),
+                      fontSize: 13,
+                    ),
                     alignLabelWithHint: true,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -338,9 +350,32 @@ class _NewWorkspaceDialogBodyState extends State<_NewWorkspaceDialogBody> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {
-                          // TODO: Implement collection creation
-                          Navigator.of(context).pop();
+                        onPressed: () async {
+                          if (_collectionNameController.text.isEmpty) {
+                            return;
+                          }
+
+                          final collection = RequestCollection(
+                            name: _collectionNameController.text,
+                            description: _collectionDescriptionController.text,
+                            workspaceId: Provider.of<WorkspaceProvider>(
+                              context,
+                              listen: false,
+                            ).currentWorkspace!.id,
+                            requests: [],
+                            isExpanded: true,
+                            icon: currentIcon,
+                            color: currentColor,
+                          );
+
+                          await Provider.of<RequestProvider>(
+                            context,
+                            listen: false,
+                          ).addCollection(collection);
+
+                          if (context.mounted) {
+                            Navigator.of(context).pop();
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,

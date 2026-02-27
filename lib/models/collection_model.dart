@@ -1,9 +1,13 @@
+import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'http_request.dart';
 
 class RequestCollection {
   final String id;
+  final IconData? icon;
+  final Color? color;
   String name;
+  String? description;
   List<HttpRequest> requests;
   bool isExpanded;
   String workspaceId;
@@ -14,6 +18,9 @@ class RequestCollection {
     required this.workspaceId,
     List<HttpRequest>? requests,
     this.isExpanded = true,
+    this.icon,
+    this.color,
+    this.description,
   }) : id = id ?? const Uuid().v4(),
        requests = requests ?? [];
 
