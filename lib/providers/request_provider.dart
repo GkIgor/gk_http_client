@@ -4,6 +4,7 @@ import 'package:gk_http_client/models/http_response.dart';
 import 'package:gk_http_client/models/collection_model.dart';
 
 import 'package:gk_http_client/repository/collection_repository.dart';
+import 'package:gk_http_client/theme/app_colors.dart';
 
 class RequestProvider with ChangeNotifier {
   final CollectionRepository _repository = CollectionRepository();
@@ -24,15 +25,29 @@ class RequestProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String get searchFilter => _searchFilter;
 
+  static const Map<String, IconData> icons = {
+    'folder': Icons.folder_rounded,
+    'api': Icons.api_rounded,
+    'webhook': Icons.webhook_rounded,
+    'storage': Icons.storage_rounded,
+  };
+
+  static const Map<String, Color> colors = {
+    '#8b5cf6': AppColors.primary,
+    '#10b981': Color(0xFF10b981),
+    '#f59e0b': Color(0xFFf59e0b),
+    '#f43f5e': Color(0xFFf43f5e),
+  };
+
   Future<void> addCollection(RequestCollection collection) async {
     _collections.add(collection);
     _saveCollections();
     notifyListeners();
   }
 
-  void removeCollection(String collectionId) {
+  Future<void> removeCollection(String collectionId) async {
     _collections.removeWhere((c) => c.id == collectionId);
-    _repository.delete(collectionId);
+    await _repository.delete(collectionId);
     notifyListeners();
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gk_http_client/providers/workspace_provider.dart';
+import 'package:gk_http_client/widgets/dialogs/manage_collection.dart';
 import 'package:provider/provider.dart';
 import 'package:gk_http_client/models/collection_model.dart';
 import 'package:gk_http_client/providers/request_provider.dart';
@@ -20,6 +21,22 @@ class _RequestSidebarState extends State<RequestSidebar> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final wsProvider = Provider.of<WorkspaceProvider>(context, listen: false);
+      final requestProvider = Provider.of<RequestProvider>(
+        context,
+        listen: false,
+      );
+
+      if (wsProvider.currentWorkspace != null) {
+        requestProvider.loadCollections(wsProvider.currentWorkspace!.id);
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _scrollController.dispose();
     _searchController.dispose();
@@ -29,14 +46,6 @@ class _RequestSidebarState extends State<RequestSidebar> {
   @override
   Widget build(BuildContext context) {
     final requestProvider = Provider.of<RequestProvider>(context);
-    final WorkspaceProvider wsProvider = Provider.of<WorkspaceProvider>(
-      context,
-    );
-
-    final workspaceId = wsProvider.currentWorkspace!.id;
-
-    requestProvider.loadCollections(workspaceId);
-
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
@@ -96,15 +105,15 @@ class _RequestSidebarState extends State<RequestSidebar> {
             color: isDark ? AppColors.borderDark : AppColors.borderLight,
           ),
 
-          _NewWorkspaceButton(isDark: isDark),
+          _NewCollectionButton(isDark: isDark),
         ],
       ),
     );
   }
 }
 
-class _NewWorkspaceButton extends StatelessWidget {
-  const _NewWorkspaceButton({required this.isDark});
+class _NewCollectionButton extends StatelessWidget {
+  const _NewCollectionButton({required this.isDark});
 
   final bool isDark;
 
@@ -143,19 +152,8 @@ class _NewWorkspaceButton extends StatelessWidget {
   }
 
   void _openNewCollectionDialog(BuildContext context, bool isDark) {
-    final Map<String, IconData> icons = {
-      'folder': Icons.folder_rounded,
-      'api': Icons.api_rounded,
-      'webhook': Icons.webhook_rounded,
-      'storage': Icons.storage_rounded,
-    };
-
-    final Map<String, Color> colors = {
-      '#8b5cf6': AppColors.primary,
-      '#10b981': const Color(0xFF10b981),
-      '#f59e0b': const Color(0xFFf59e0b),
-      '#f43f5e': const Color(0xFFf43f5e),
-    };
+    final Map<String, IconData> icons = RequestProvider.icons;
+    final Map<String, Color> colors = RequestProvider.colors;
 
     showDialog(
       context: context,
@@ -164,10 +162,11 @@ class _NewWorkspaceButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          child: _NewWorkspaceDialogBody(
+          child: NewCollectionDialogBody(
             icons: icons,
             colors: colors,
             isDark: isDark,
+            isCreate: true,
           ),
         );
       },
@@ -175,298 +174,16 @@ class _NewWorkspaceButton extends StatelessWidget {
   }
 }
 
-class _NewWorkspaceDialogBody extends StatefulWidget {
-  const _NewWorkspaceDialogBody({
-    required this.icons,
-    required this.colors,
-    required this.isDark,
-  });
-
-  final Map<String, IconData> icons;
-  final Map<String, Color> colors;
-  final bool isDark;
-
-  @override
-  State<_NewWorkspaceDialogBody> createState() =>
-      _NewWorkspaceDialogBodyState();
-}
-
-class _NewWorkspaceDialogBodyState extends State<_NewWorkspaceDialogBody> {
-  Color currentColor = AppColors.primary;
-  IconData currentIcon = Icons.folder_rounded;
-  late TextEditingController _collectionDescriptionController;
-  late TextEditingController _collectionNameController;
-
-  @override
-  void initState() {
-    _collectionDescriptionController = TextEditingController();
-    _collectionNameController = TextEditingController();
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    _collectionDescriptionController.dispose();
-    _collectionNameController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        width: 500,
-        height: 480,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.create_new_folder),
-                const SizedBox(width: 8),
-                const Text('Create New Collection'),
-              ],
-            ),
-            Divider(
-              height: 1,
-              color: widget.isDark
-                  ? AppColors.borderDark
-                  : AppColors.borderLight,
-            ),
-            const SizedBox(height: 25),
-            const Text('COLLECTION NAME'),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _collectionNameController,
-              decoration: InputDecoration(
-                hintText: 'e.g. Payments API',
-                hintStyle: TextStyle(
-                  color:
-                      (widget.isDark ? AppColors.textDark : AppColors.textLight)
-                          .withValues(alpha: 0.2),
-                ),
-              ),
-              autofocus: true,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('SELECT ICON'),
-                    // const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        for (final entry in widget.icons.entries) ...[
-                          _buildIconSelector(entry, entry.value == currentIcon),
-                          const SizedBox(width: 6),
-                        ],
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 14),
-                Column(
-                  children: [
-                    Text('FOLDER COLOR'),
-                    Row(
-                      children: [
-                        for (final color in widget.colors.entries) ...[
-                          _buildColorSelector(
-                            color,
-                            color.value == currentColor,
-                          ),
-                          const SizedBox(width: 6),
-                        ],
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            SizedBox(height: 24),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('DESCRIPTION (OPTIONAL)'),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _collectionDescriptionController,
-                  maxLines: 8,
-                  minLines: 4,
-                  keyboardType: TextInputType.multiline,
-                  decoration: InputDecoration(
-                    hintText:
-                        'Briefly describe the purpose of this collection...',
-                    hintStyle: TextStyle(
-                      color:
-                          (widget.isDark
-                                  ? AppColors.textDark
-                                  : AppColors.textLight)
-                              .withValues(alpha: 0.2),
-                      fontSize: 13,
-                    ),
-                    alignLabelWithHint: true,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            Column(
-              children: [
-                SizedBox(height: 24),
-                Divider(height: 1),
-                SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          foregroundColor: widget.isDark
-                              ? AppColors.textDark
-                              : AppColors.textLight,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            side: BorderSide(
-                              color: widget.isDark
-                                  ? AppColors.borderDark
-                                  : AppColors.borderLight,
-                            ),
-                          ),
-                        ),
-                        child: const Text('Cancel'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          if (_collectionNameController.text.isEmpty) {
-                            return;
-                          }
-
-                          final collection = RequestCollection(
-                            name: _collectionNameController.text,
-                            description: _collectionDescriptionController.text,
-                            workspaceId: Provider.of<WorkspaceProvider>(
-                              context,
-                              listen: false,
-                            ).currentWorkspace!.id,
-                            requests: [],
-                            isExpanded: true,
-                            icon: currentIcon,
-                            color: currentColor,
-                          );
-
-                          await Provider.of<RequestProvider>(
-                            context,
-                            listen: false,
-                          ).addCollection(collection);
-
-                          if (context.mounted) {
-                            Navigator.of(context).pop();
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: const Text('Create Collection'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildIconSelector(MapEntry<String, IconData> entry, bool isSelected) {
-    return InkWell(
-      onTap: () {
-        setState(() {
-          currentIcon = entry.value;
-        });
-      },
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(
-            width: 1.5,
-            color: isSelected
-                ? AppColors.primary.withValues(alpha: .9)
-                : (widget.isDark
-                      ? AppColors.borderDark
-                      : AppColors.borderLight),
-          ),
-
-          borderRadius: BorderRadius.circular(8),
-        ),
-        padding: EdgeInsets.all(8),
-        child: Icon(
-          entry.value,
-          color: isSelected
-              ? AppColors.primary.withValues(alpha: .9)
-              : AppColors.slate500,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildColorSelector(MapEntry<String, Color> entry, bool isSelected) {
-    return InkWell(
-      onTap: () {
-        setState(() {
-          currentColor = entry.value;
-        });
-      },
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: isSelected ? entry.value : Colors.transparent,
-            width: 2,
-          ),
-        ),
-        padding: const EdgeInsets.all(3),
-        child: Container(
-          decoration: BoxDecoration(color: entry.value, shape: BoxShape.circle),
-        ),
-      ),
-    );
-  }
-}
-
 class _Collection extends StatelessWidget {
+  final BuildContext context;
+  final RequestProvider provider;
+  final RequestCollection collection;
+
   const _Collection({
     required this.context,
     required this.provider,
     required this.collection,
   });
-
-  final BuildContext context;
-  final RequestProvider provider;
-  final RequestCollection collection;
 
   @override
   Widget build(BuildContext context) {
