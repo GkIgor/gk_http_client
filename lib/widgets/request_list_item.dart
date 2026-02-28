@@ -23,6 +23,9 @@ class RequestListItem extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
+      onDoubleTap: () {
+        _editRequest(context);
+      },
       borderRadius: BorderRadius.circular(6),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -64,4 +67,6 @@ class RequestListItem extends StatelessWidget {
       ),
     );
   }
+
+  void _editRequest(BuildContext context) {}
 }

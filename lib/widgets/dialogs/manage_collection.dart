@@ -11,13 +11,13 @@ class NewCollectionDialogBody extends StatefulWidget {
     required this.icons,
     required this.colors,
     required this.isDark,
-    required this.isCreate,
+    this.collection,
   });
 
   final Map<String, IconData> icons;
   final Map<String, Color> colors;
   final bool isDark;
-  final isCreate;
+  final RequestCollection? collection;
 
   @override
   State<NewCollectionDialogBody> createState() =>
@@ -25,15 +25,26 @@ class NewCollectionDialogBody extends StatefulWidget {
 }
 
 class _NewCollectionDialogBodyState extends State<NewCollectionDialogBody> {
-  Color currentColor = AppColors.primary;
-  IconData currentIcon = Icons.folder_rounded;
+  String currentColor = '#8b5cf6';
+  String currentIcon = 'folder';
   late TextEditingController _collectionDescriptionController;
   late TextEditingController _collectionNameController;
+  bool _editing = false;
 
   @override
   void initState() {
     _collectionDescriptionController = TextEditingController();
     _collectionNameController = TextEditingController();
+
+    if (widget.collection != null) {
+      _editing = true;
+      currentColor = widget.collection!.color;
+      currentIcon = widget.collection!.icon;
+      _collectionNameController.text = widget.collection?.name ?? '';
+      _collectionDescriptionController.text =
+          widget.collection?.description ?? '';
+    }
+
     super.initState();
   }
 
@@ -94,7 +105,7 @@ class _NewCollectionDialogBodyState extends State<NewCollectionDialogBody> {
                     Row(
                       children: [
                         for (final entry in widget.icons.entries) ...[
-                          _buildIconSelector(entry, entry.value == currentIcon),
+                          _buildIconSelector(entry, entry.key == currentIcon),
                           const SizedBox(width: 6),
                         ],
                       ],
@@ -108,10 +119,7 @@ class _NewCollectionDialogBodyState extends State<NewCollectionDialogBody> {
                     Row(
                       children: [
                         for (final color in widget.colors.entries) ...[
-                          _buildColorSelector(
-                            color,
-                            color.value == currentColor,
-                          ),
+                          _buildColorSelector(color, color.key == currentColor),
                           const SizedBox(width: 6),
                         ],
                       ],
@@ -183,33 +191,7 @@ class _NewCollectionDialogBodyState extends State<NewCollectionDialogBody> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () async {
-                          if (_collectionNameController.text.isEmpty) {
-                            return;
-                          }
-
-                          final collection = RequestCollection(
-                            name: _collectionNameController.text,
-                            description: _collectionDescriptionController.text,
-                            workspaceId: Provider.of<WorkspaceProvider>(
-                              context,
-                              listen: false,
-                            ).currentWorkspace!.id,
-                            requests: [],
-                            isExpanded: true,
-                            icon: currentIcon,
-                            color: currentColor,
-                          );
-
-                          await Provider.of<RequestProvider>(
-                            context,
-                            listen: false,
-                          ).addCollection(collection);
-
-                          if (context.mounted) {
-                            Navigator.of(context).pop();
-                          }
-                        },
+                        onPressed: () => _handleSubmit(context),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
@@ -218,7 +200,9 @@ class _NewCollectionDialogBodyState extends State<NewCollectionDialogBody> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        child: const Text('Create Collection'),
+                        child: Text(
+                          _editing ? 'Update Collection' : 'Create Collection',
+                        ),
                       ),
                     ),
                   ],
@@ -235,7 +219,7 @@ class _NewCollectionDialogBodyState extends State<NewCollectionDialogBody> {
     return InkWell(
       onTap: () {
         setState(() {
-          currentIcon = entry.value;
+          currentIcon = entry.key;
         });
       },
       borderRadius: BorderRadius.circular(8),
@@ -267,7 +251,7 @@ class _NewCollectionDialogBodyState extends State<NewCollectionDialogBody> {
     return InkWell(
       onTap: () {
         setState(() {
-          currentColor = entry.value;
+          currentColor = entry.key;
         });
       },
       borderRadius: BorderRadius.circular(20),
@@ -287,5 +271,43 @@ class _NewCollectionDialogBodyState extends State<NewCollectionDialogBody> {
         ),
       ),
     );
+  }
+
+  Future<void> _handleSubmit(BuildContext context) async {
+    if (_collectionNameController.text.isEmpty) {
+      return;
+    }
+
+    final collection = RequestCollection(
+      name: _collectionNameController.text,
+      description: _collectionDescriptionController.text,
+      workspaceId: _editing
+          ? widget.collection!.workspaceId
+          : Provider.of<WorkspaceProvider>(
+              context,
+              listen: false,
+            ).currentWorkspace!.id,
+      requests: _editing ? widget.collection!.requests : [],
+      isExpanded: _editing ? widget.collection!.isExpanded : true,
+      icon: currentIcon,
+      color: currentColor,
+      id: _editing ? widget.collection!.id : null,
+    );
+
+    if (!_editing) {
+      await Provider.of<RequestProvider>(
+        context,
+        listen: false,
+      ).addCollection(collection);
+    } else {
+      await Provider.of<RequestProvider>(
+        context,
+        listen: false,
+      ).updateCollection(collection);
+    }
+
+    if (context.mounted) {
+      Navigator.of(context).pop();
+    }
   }
 }

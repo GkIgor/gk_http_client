@@ -166,7 +166,6 @@ class _NewCollectionButton extends StatelessWidget {
             icons: icons,
             colors: colors,
             isDark: isDark,
-            isCreate: true,
           ),
         );
       },
@@ -192,9 +191,6 @@ class _Collection extends StatelessWidget {
       isExpanded: collection.isExpanded,
       onToggle: () {
         provider.toggleCollectionExpansion(collection.id);
-      },
-      onMoreOptions: () {
-        // TODO: Collection options
       },
       child: Column(
         children: collection.requests.map((request) {

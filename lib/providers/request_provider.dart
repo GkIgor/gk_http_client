@@ -51,11 +51,11 @@ class RequestProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void updateCollection(RequestCollection collection) {
+  Future<void> updateCollection(RequestCollection collection) async {
     final index = _collections.indexWhere((c) => c.id == collection.id);
     if (index != -1) {
       _collections[index] = collection;
-      _saveCollections();
+      await _saveCollections();
       notifyListeners();
     }
   }

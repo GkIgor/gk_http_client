@@ -1,15 +1,14 @@
-import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'http_request.dart';
 
 class RequestCollection {
   final String id;
-  final IconData? icon;
-  final Color? color;
-  String name;
+  final String icon;
+  final String color;
   String? description;
-  List<HttpRequest> requests;
+  String name;
   bool isExpanded;
+  List<HttpRequest> requests;
   String workspaceId;
 
   RequestCollection({
@@ -18,8 +17,8 @@ class RequestCollection {
     required this.workspaceId,
     List<HttpRequest>? requests,
     this.isExpanded = true,
-    this.icon,
-    this.color,
+    this.icon = 'folder',
+    this.color = '#8b5cf6',
     this.description,
   }) : id = id ?? const Uuid().v4(),
        requests = requests ?? [];
@@ -51,6 +50,9 @@ class RequestCollection {
       requests: requests ?? this.requests,
       isExpanded: isExpanded ?? this.isExpanded,
       workspaceId: workspaceId,
+      icon: icon,
+      color: color,
+      description: description,
     );
   }
 
@@ -61,6 +63,9 @@ class RequestCollection {
       'requests': requests.map((r) => r.toJson()).toList(),
       'isExpanded': isExpanded,
       'workspaceId': workspaceId,
+      'icon': icon,
+      'color': color,
+      'description': description,
     };
   }
 
@@ -73,6 +78,9 @@ class RequestCollection {
           .toList(),
       isExpanded: json['isExpanded'] as bool? ?? true,
       workspaceId: json['workspaceId'] as String,
+      icon: json['icon'] as String? ?? 'folder',
+      color: json['color'] as String? ?? '#8b5cf6',
+      description: json['description'] as String?,
     );
   }
 }

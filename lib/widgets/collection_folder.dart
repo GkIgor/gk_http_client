@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:gk_http_client/models/collection_model.dart';
+import 'package:gk_http_client/models/http_method.dart';
+import 'package:gk_http_client/models/http_request.dart';
 import 'package:gk_http_client/providers/request_provider.dart';
 import 'package:gk_http_client/theme/app_colors.dart';
+import 'package:gk_http_client/widgets/dialogs/manage_collection.dart';
 import 'package:provider/provider.dart';
 
 class CollectionFolder extends StatelessWidget {
@@ -9,7 +12,6 @@ class CollectionFolder extends StatelessWidget {
   final bool isExpanded;
   final VoidCallback onToggle;
   final Widget child; // Lista de requisições
-  final VoidCallback? onMoreOptions;
 
   const CollectionFolder({
     super.key,
@@ -17,7 +19,6 @@ class CollectionFolder extends StatelessWidget {
     required this.isExpanded,
     required this.onToggle,
     required this.child,
-    this.onMoreOptions,
   });
 
   @override
@@ -51,27 +52,18 @@ class CollectionFolder extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (onMoreOptions != null)
-                  Opacity(
-                    opacity: 0.7, // TODO: Hover effect to show/hide
-                    child: PopupMenuButton(
-                      itemBuilder: (context) =>
-                          _popupMenuItems(collectionProvider, context),
-                      icon: const Icon(
-                        Icons.more_horiz_rounded,
-                        size: 16,
-                        color: AppColors.slate400,
-                      ),
+                Opacity(
+                  opacity: 0.7, // TODO: Hover effect to show/hide
+                  child: PopupMenuButton(
+                    itemBuilder: (_) =>
+                        _popupMenuItems(collectionProvider, context),
+                    icon: const Icon(
+                      Icons.more_horiz_rounded,
+                      size: 16,
+                      color: AppColors.slate400,
                     ),
-                    // child: InkWell(
-                    //   onTap: onMoreOptions,
-                    //   child: const Icon(
-                    //     Icons.more_horiz_rounded,
-                    //     size: 16,
-                    //     color: AppColors.slate400,
-                    //   ),
-                    // ),
                   ),
+                ),
               ],
             ),
           ),
@@ -90,17 +82,67 @@ class CollectionFolder extends StatelessWidget {
     BuildContext context,
   ) {
     return [
-      PopupMenuItem(onTap: () {}, child: const Text('Edit')),
+      PopupMenuItem(
+        onTap: () async {
+          await _createNewRequest(context, provider);
+        },
+        child: const Text('Create New Request'),
+      ),
+      PopupMenuItem(
+        onTap: () {
+          _openEditCollectionDialog(
+            context,
+            Theme.of(context).brightness == Brightness.dark,
+          );
+        },
+        child: const Text('Edit'),
+      ),
       PopupMenuItem(
         onTap: () async {
           await provider.removeCollection(collection.id);
-
-          if (context.mounted) {
-            Navigator.of(context).pop();
-          }
         },
         child: const Text('Delete'),
       ),
     ];
+  }
+
+  void _openEditCollectionDialog(BuildContext context, bool isDark) {
+    final Map<String, IconData> icons = RequestProvider.icons;
+    final Map<String, Color> colors = RequestProvider.colors;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: NewCollectionDialogBody(
+            icons: icons,
+            colors: colors,
+            isDark: isDark,
+            collection: collection,
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _createNewRequest(
+    BuildContext context,
+    RequestProvider provider,
+  ) async {
+    final newRequest = HttpRequest(
+      id: UniqueKey().toString(),
+      name: 'New Request',
+      method: HttpMethod.get,
+      url: '',
+    );
+
+    final updatedCollection = collection.copyWith(
+      requests: [...collection.requests, newRequest],
+    );
+
+    await provider.updateCollection(updatedCollection);
   }
 }
